@@ -1,0 +1,21 @@
+{
+  "checks": {
+    "adaptive_check_secure_port_alert":{
+  "comment": "Checks to see adaptive secure port status ",
+  "command": "/etc/sensu/plugins/check-banner.rb -p 443 -t 10",
+  "notification": "Checks to see adaptive secure port status",
+  "subscribers": [
+    "Adaptive_API",
+    "Adaptive_Api-Perf"
+  ],
+  "standalone": true,
+  "handlers": [
+    "default","pagerduty"
+  ],
+  "interval": 60,
+  "additional": {
+    "occurrences": 2
+  }
+}
+}
+}

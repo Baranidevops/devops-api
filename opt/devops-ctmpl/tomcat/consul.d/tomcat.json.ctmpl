@@ -1,0 +1,14 @@
+{
+  "service": {
+    "name": "adaptive-tomcat",
+    "id": "{{ env "INSTANCE_ID"}}",
+    "port": 8080,
+    "tags": [ "adaptive" ],
+    "check": {
+      "name": "Tomcat Web Page Check",
+      "notes": "Check to see if ports 80 and 8080 are LISTENING every 10s",
+      "interval": "10s",
+      "script": "{{ if env "TOMCAT_CONSUL_CHECK_CMD" }}{{ env "TOMCAT_CONSUL_CHECK_CMD" }}{{ else }}ss -lnp | grep -e ':80 ' -e ':8080'{{ end }}"
+    }
+  }
+}

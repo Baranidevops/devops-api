@@ -1,0 +1,15 @@
+[Unit]
+Description=For get information from AWS tag
+Before=consul-template.service
+After=consul-client.service
+Requires=consul-client.service
+
+[Service]
+EnvironmentFile=/etc/environment
+ExecStart=/usr/bin/tagenvset.sh
+User=root
+Group=root
+Restart=on-failure
+RestartSec=10
+[Install]
+WantedBy=multi-user.target

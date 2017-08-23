@@ -1,0 +1,21 @@
+{
+  "checks": {
+    "adaptive_check_apache_port_alert":{
+  "comment": "Checks to see adaptive  apache port status ",
+  "command": "/etc/sensu/plugins/check-banner.rb -p 80 -t 10",
+  "notification": "Checks to alert port availability for adaptive application",
+  "subscribers": [
+    "Adaptive_API",
+    "Adaptive_Api-Perf"
+  ],
+  "standalone": true,
+  "handlers": [
+    "default","pagerduty"
+  ],
+  "interval": 60,
+  "additional": {
+    "occurrences": 2
+    }
+   }
+  }
+}

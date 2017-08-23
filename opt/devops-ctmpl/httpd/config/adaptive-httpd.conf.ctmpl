@@ -1,0 +1,402 @@
+# This is the main Apache HTTP server configuration file.  It contains the
+# configuration directives that give the server its instructions.
+
+
+# STORE YOUR CUSTOM CONFIGURATION FILES IN /etc/httpd/conf.d/ ##
+IncludeOptional /etc/httpd/conf.d/*.conf
+
+# STORE YOUR CUSTOM MODULES IN /etc/httpd/conf.d/ ##
+IncludeOptional /etc/httpd/conf.modules.d/*.conf
+# Core configuration
+
+ServerRoot "/etc/httpd"
+
+Listen 80
+
+# CIS 1.5.8
+TraceEnable off
+
+# Default Modules
+
+LoadModule authn_core_module modules/mod_authn_core.so
+LoadModule authn_file_module modules/mod_authn_file.so
+LoadModule authz_host_module modules/mod_authz_host.so
+
+LoadModule authz_core_module modules/mod_authz_core.so
+LoadModule authz_groupfile_module modules/mod_authz_groupfile.so
+LoadModule authz_user_module modules/mod_authz_user.so
+LoadModule access_compat_module modules/mod_access_compat.so
+LoadModule alias_module modules/mod_alias.so
+LoadModule auth_basic_module modules/mod_auth_basic.so
+
+LoadModule unixd_module modules/mod_unixd.so
+
+LoadModule filter_module modules/mod_filter.so
+LoadModule reqtimeout_module modules/mod_reqtimeout.so
+
+
+LoadModule mime_module modules/mod_mime.so
+LoadModule log_config_module modules/mod_log_config.so
+
+LoadModule env_module modules/mod_env.so
+
+LoadModule headers_module modules/mod_headers.so
+LoadModule unique_id_module modules/mod_unique_id.so
+LoadModule setenvif_module modules/mod_setenvif.so
+LoadModule status_module modules/mod_status.so
+LoadModule rewrite_module modules/mod_rewrite.so
+LoadModule mpm_event_module modules/mod_mpm_event.so
+
+LoadModule dir_module modules/mod_dir.so
+LoadModule version_module modules/mod_version.so
+LoadModule systemd_module modules/mod_systemd.so
+
+# Proxy Modules
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+
+# CIS 1.7.1
+LoadModule ssl_module modules/mod_ssl.so
+
+
+
+
+<IfModule unixd_module>
+
+User apache
+Group apache
+
+</IfModule>
+
+
+ServerName localhost
+
+# CIS 1.8.1
+ServerTokens Prod
+
+# CIS 1.8.2
+ServerSignature Off
+
+# CIS 1.9.1
+Timeout 10
+
+# CIS 1.10.1
+LimitRequestLine 513
+
+# CIS 1.10.2
+LimitRequestFields 100
+
+# CIS 1.10.3
+LimitRequestFieldSize 1024
+
+# CIS 1.10.4
+LimitRequestBody 102400
+<Directory />
+   Order Deny,Allow
+   Deny from all
+   Options None
+   AllowOverride None
+   Require all denied
+</Directory>
+
+DocumentRoot "/var/www/html"
+<Directory "/var/www/html">
+    Options None
+    AllowOverride None
+    Require all granted
+   <Files ping.html>
+     Order Deny,Allow
+   </Files>
+    <Files akamai-sureroute-test-object.htm>
+      Order deny,allow
+    </Files>
+    <Files config.json>
+      Order deny,allow
+      Deny from all
+      Allow from 127.0.0.1
+   </Files>
+    <Files features.json>
+     Order deny,allow
+     Deny from all
+      Allow from 127.0.0.1
+   </Files>
+</Directory>
+
+# CIS 1.5.14
+Header always append X-Frame-Options SAMEORIGIN
+# CIS 1.5.10
+<Files ".ht*">
+    Require all denied
+</Files>
+
+# CIS 1.6.1
+
+ErrorLog "|/usr/sbin/rotatelogs -n 10 /var/log/httpd/adaptive-apache_error_log 20M"
+
+
+LogLevel info
+
+<IfModule log_config_module>
+
+    LogFormat "%h %{True-Client-IP}i %{X-Forwarded-For}i %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" %{X-Akamai-Device-Characteristics}i %{X-TGT-UA-Type}i %{Aka-Req-Id}i %{JSESSIONID}C %T/%D" combined
+    LogFormat "%h %{True-Client-IP}i %{X-Forwarded-For}i %t %{SSL_PROTOCOL}x %{SSL_CIPHER}x \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" %{X-Akamai-Device-Characteristics}i %{X-TGT-UA-Type}i %{Aka-Req-Id}i %{JSESSIONID}C %T/%D" ssl-combined
+    LogFormat "%h %l %u %t \"%r\" %>s %b" common
+
+    <IfModule logio_module>
+      # You need to enable mod_logio.c to use %I and %O
+      LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" %I %O" combinedio
+    </IfModule>
+
+
+    CustomLog "|/usr/sbin/rotatelogs -n 10 /var/log/httpd/adaptive-apache_access_log 20M" combined
+
+
+</IfModule>
+
+#<IfModule alias_module>
+    #
+    # Redirect: Allows you to tell clients about documents that used to
+    # exist in your server's namespace, but do not anymore. The client
+    # will make a new request for the document at its new location.
+    # Example:
+    # Redirect permanent /foo http://www.example.com/bar
+
+    #
+    # Alias: Maps web paths into filesystem paths and is used to
+    # access content that does not live under the DocumentRoot.
+    # Example:
+    # Alias /webpath /full/filesystem/path
+    #
+    # If you include a trailing / on /webpath then the server will
+    # require it to be present in the URL.  You will also likely
+    # need to provide a <Directory> section to allow access to
+    # he filesystem path.
+
+    #
+    # ScriptAlias: This controls which directories contain server scripts.
+    # ScriptAliases are essentially the same as Aliases, except that
+    # documents in the target directory are treated as applications and
+    # run by the server when requested rather than as documents sent to the
+    # client.  The same rules about trailing "/" apply to ScriptAlias
+    # directives as to Alias.
+    #
+ #  ScriptAlias /cgi-bin/ "/apps/install/apache/httpd//cgi-bin/"
+
+#</IfModule>
+
+#<IfModule cgid_module>
+    #
+    # ScriptSock: On threaded servers, designate the path to the UNIX
+    # socket used to communicate with the CGI daemon of mod_cgid.
+    #
+    #Scriptsock cgisock
+#</IfModule>
+
+#
+# "/apps/install/apache/httpd//cgi-bin" should be changed to whatever your ScriptAliased
+# CGI directory exists, if you have that configured.
+#
+#<Directory "/apps/install/apache/httpd/cgi-bin">
+ #   AllowOverride None
+ #  Options None
+ #  Require all granted
+#</Directory>
+
+<IfModule mime_module>
+
+    TypesConfig /etc/mime.types
+    AddType application/x-compress .Z
+    AddType application/x-gzip .gz .tgz
+
+</IfModule>
+
+
+LimitRequestFieldsize 16384
+
+ErrorDocument 401 "Unauthorized"
+ErrorDocument 404 "Page Not Found"
+ErrorDocument 500 "Internal Server Error"
+ErrorDocument 503 "Service Unavailable"
+
+# Enable Rewrite engine
+RewriteEngine  on
+
+# Redirect to 404 error page, when there is a request for JSP page
+RewriteCond %{REQUEST_URI} ^/.*\.(jsp) [NC]
+RewriteRule ^/.*$ http://www.target.com/webapp/wcs/stores/servlet/NotFoundErrorPageView
+
+RewriteCond %{THE_REQUEST} !HTTP/1\.1$
+RewriteRule .* - [F]
+
+# Skip images and other content files
+RewriteRule \.(ico|gif|jpg|jpeg|png|xml|css|js|swf|flv|fmv|txt|htc|htm|html|jsp|json)$ - [NC,PT,L,QSA]
+
+###Start UI Mod Rewrite Rules###
+
+# Skip application URIs that begin with any of the items in this list
+RewriteRule ^\/(mobile)\/.*$ - [PT,L,QSA]
+
+#If access directly with domain name rewrite URL to home action to display Home Page.
+RewriteRule ^/$ /mobile/home [PT,L,QSA]
+
+#To block and secure pages being accessed with a non secure links
+#RewriteCond %{REQUEST_URI} ^(.*)/co-.*|gam-.*|maccount_resetpwdview|giftcard$ [NC]
+#RewriteRule ^.*$ - [F,L]
+
+# If we got down to here - prepend this to the URI
+RewriteRule ^/(.*)$ /mobile/$1 [PT,L,QSA]
+###End UI Mod Rewrite Rules###
+
+
+<IfModule proxy_html_module>
+Include conf/extra/proxy-html.conf
+</IfModule>
+
+
+# Put this after the other LoadModule directives
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_ajp_module modules/mod_proxy_ajp.so
+
+# Put this in the main section of your configuration (or desired virtual host, if using Apache virtual hosts)
+ProxyRequests Off
+ProxyPreserveHost On
+
+<Proxy *>
+    Require all granted
+</Proxy>
+
+ProxyPass / ajp://localhost:8006/
+ProxyPassReverse / ajp://localhost:8006/
+<Location />
+    Require all granted
+</Location>
+
+<VirtualHost _default_:443>
+DocumentRoot "/var/www/html"
+LogFormat "%h %l %u %t \"%r\" %>s %b %D %{Host}i" combined
+ErrorLog "|/usr/sbin/rotatelogs -n 10 /var/log/httpd/adaptive-apache_443_error_log 20M"
+
+SSLEngine on
+ProxyRequests Off
+ProxyPreserveHost On
+SSLCertificateFile "/etc/httpd/certificates/adaptive-apache.crt"
+SSLCertificateKeyFile "/etc/httpd/certificates/adaptive-apache.key"
+#CustomLog "|/apps/install/apache/httpd/bin/rotatelogs -n 10 /apps/logs/apache/httpd/adaptive-apache_ssl_access_log 20M" ssl-combined
+
+
+###Start UI Mod Rewrite Rules###
+
+# Skip application URIs that begin with any of the items in this list
+RewriteRule ^\/(mobile)\/.*$ - [PT,L,QSA]
+
+#If access directly with domain name rewrite URL to home action to display Home Page.
+RewriteRule ^/$ /mobile/home [PT,L,QSA]
+
+# If we got down to here - prepend this to the URI
+RewriteRule ^/(.*)$ /mobile/$1 [PT,L,QSA]
+###End UI Mod Rewrite Rules###
+
+ProxyPass / ajp://localhost:8006/
+ProxyPassReverse / ajp://localhost:8006/
+</VirtualHost>
+
+# A HTML page is presented that gives the current server statistics in an easily readable form.
+# Allow from 127.0.0.1 allows the server-status accessible only from localhost
+<Location /server-status>
+  SetHandler server-status
+  Order Deny,Allow
+  Deny from all
+  Allow from 127.0.0.1
+</Location>
+
+<Location /DemoApp/*>
+    <LimitExcept POST PUT GET DELETE>
+            Deny from all
+    </LimitExcept>
+</Location>
+
+#Disable Trace
+TraceEnable off
+
+#Set Server Token to PROD
+ServerTokens prod
+
+#Performance Tuning Directives
+#The MaxClients sets the limit on maximum simultaneous requests that can be supported by the server; no more #than these numbers of child processes are spawned. It shouldn't be set too low;
+MaxClients 10584
+# Number of child server processes created at startup
+StartServers 1
+# Upper limit on configurable number of processes
+ServerLimit 7
+# Sets the upper limit on the configurable number of threads per child process
+# 1920 is default value
+ThreadLimit 1512
+# Number of threads created by each child process
+ThreadsPerChild 1512
+# Limit on the number of requests that an individual child server will handle during its life
+# Default value is 10000
+MaxRequestsPerChild 100000
+# Minimum number of idle threads available to handle request spikes
+MinSpareThreads 1
+# Maximum number of idle threads
+MaxSpareThreads 1512
+
+
+# Secure (SSL/TLS) connections
+#Include conf/extra/httpd-ssl.conf
+#
+# Note: he following must must be present to support
+#       starting without SSL on platforms with no /dev/random equivalent
+#       but a statically compiled-in mod_ssl.
+#
+<IfModule ssl_module>
+SSLRandomSeed startup builtin
+SSLRandomSeed connect builtin
+</IfModule>
+#
+# uncomment out the below to deal with user agents that deliberately
+# violate open standards by misusing DNT (DNT *must* be a specific
+# end-user choice)
+#
+#<IfModule setenvif_module>
+#BrowserMatch "MSIE 10.0;" bad_DNT
+#</IfModule>
+#<IfModule headers_module>
+#RequestHeader unset DNT env=bad_DNT
+#</IfModule>
+
+Listen 443
+
+# enable SSLv3 and all available TLSv1 flavors, but not SSLv2
+SSLProtocol All -SSLv2
+##
+##  SSL Global Context
+##
+##  All SSL configuration in this context applies both to
+##  the main server and all SSL-enabled virtual hosts.
+##
+
+#   SSL Cipher Suite:
+#   List the ciphers that the client is permitted to negotiate.
+#   See the mod_ssl documentation for a complete list.
+#SSLCipherSuite HIGH:MEDIUM:!aNULL:!MD5
+
+SSLCipherSuite AES256-SHA:AES128-SHA:HIGH:MEDIUM:!aNULL:!MD5:!RC4
+SSLHonorCipherOrder on
+
+
+#SSLSessionCache         "dbm:/apps/install/apache/httpd/logs/ssl_scache" Comment this line/property
+#SSLSessionCacheTimeout  300 - Comment this line/property
+
+Timeout 10
+
+Header always append X-Frame-Options SAMEORIGIN
+
+LimitRequestline 512
+
+LimitRequestFields 100
+
+
+ProxyIOBufferSize 65536
+
+LimitRequestBody 102400

@@ -1,0 +1,22 @@
+input {
+
+  file {
+      path => "/var/log/tomcat/*"
+      tags => ["tomcat", "app"]
+      type => "digital_logging_adaptive"
+      start_position => "beginning"
+  }
+  file {
+      path => "/var/log/httpd/*"
+      tags => ["http", "app"]
+      type => "digital_logging_adaptive"
+      start_position => "beginning"
+  }
+
+}
+
+filter {
+  date {
+     match => [ "timestamp" , "dd/MMM/yyyy:HH:mm:ss Z" , "MMM dd YYYY HH:mm:ss" , "yyyy-MM-dd HH:mm:ss,SSS" , "[yyyy-MM-dd HH:mm:ssZZ]", "yyyyMMddHHmmss" , "ISO8601"]
+  }
+}

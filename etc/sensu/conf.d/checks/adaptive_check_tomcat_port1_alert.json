@@ -1,0 +1,21 @@
+{
+  "checks": {
+    "adaptive_check_tomcat_port1_alert":{
+  "comment": "Checks to see adaptive secure port1 status ",
+  "command": "/etc/sensu/plugins/check-banner.rb -p 8080 -t 10",
+  "notification": "Checks to see adaptive secure port1 status",
+  "subscribers": [
+    "Adaptive_API",
+    "Adaptive_Api-Perf"
+  ],
+  "standalone": true,
+  "handlers": [
+    "default","pagerduty"
+  ],
+  "interval": 60,
+  "additional": {
+    "occurrences": 2
+  }
+}
+}
+}

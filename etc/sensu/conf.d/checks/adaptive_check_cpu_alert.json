@@ -1,0 +1,21 @@
+{
+  "checks": {
+    "adaptive_check_cpu_alert":{
+  "comment": "Checks to alert CPU utilization for adaptive application ",
+  "command": "/etc/sensu/plugins/check-cpu.rb -w 70 -c 75 --user",
+  "notification": "Checks to alert CPU utilization for adaptive application",
+  "subscribers": [
+    "Adaptive_API",
+    "Adaptive_Api-Perf"
+  ],
+  "standalone": true,
+  "handlers": [
+    "default","pagerduty"
+  ],
+  "interval": 300,
+  "additional": {
+    "occurrences": 2
+  }
+}
+}
+}

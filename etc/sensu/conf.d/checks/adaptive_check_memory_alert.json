@@ -1,0 +1,21 @@
+{
+  "checks": {
+    "adaptive_check_memory_alert":{
+  "comment": "Checks to alert percentage of system Memory utilization for adaptive application",
+  "command": "/etc/sensu/plugins/check-memory-pcnt.sh -w 70 -c 75",
+  "notification": "Checks to alert percentage of system Memory utilization for adaptive application",
+  "subscribers": [
+    "Adaptive_API",
+    "Adaptive_Api-Perf"
+  ],
+  "standalone": true,
+  "handlers": [
+    "default","pagerduty"
+  ],
+  "interval": 300,
+  "additional": {
+    "occurrences": 2
+  }
+}
+}
+}

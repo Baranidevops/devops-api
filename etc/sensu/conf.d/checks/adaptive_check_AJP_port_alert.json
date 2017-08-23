@@ -1,0 +1,21 @@
+{
+  "checks": {
+    "adaptive_check_AJP_port_alert":{
+      "comment": "Checks to see adaptive  AJP port status ",
+      "command": "/etc/sensu/plugins/check-banner.rb -p 8006 -t 10",
+      "notification": "Checks to alert port availability for adaptive application",
+      "subscribers": [
+          "Adaptive_API",
+          "Adaptive_Api-Perf"
+         ],
+      "standalone": true,
+      "handlers": [
+        "default","pagerduty"
+       ],
+     "interval": 60,
+     "additional": {
+      "occurrences": 2
+     }
+   }
+ }
+}

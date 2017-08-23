@@ -1,0 +1,72 @@
+#!/bin/bash
+timestamp=`date +%s`
+
+featureFileName=features.json
+configFileName=config.json
+configFilePath=http://static.targetimg1.com/adaptive/config/{{env "WHICH_ENV"}}
+
+##TEMP PATHS
+
+localpath=/var/www/html
+temppath=/opt/tmp
+logpath=/var/log/httpd/
+
+echo "INFO - [ $(date +%Y-%m-%d:%H:%M:%S) ] - ####################################" >> ${logpath}/artifactorySync.log
+
+rm -f ${temppath}/*.json
+#aws s3 sync s3://devops-npe-e1-adaptive ${temppath} --delete
+
+httpCodeConfig=`curl -k -m 60 -s -w "%{http_code}\\n" $configFilePath/$configFileName -o /dev/null`
+httpCodeFeature=`curl -k -m 60 -s -w "%{http_code}\\n" $configFilePath/$featureFileName -o /dev/null`
+
+if [[ ( $httpCodeConfig != "200" ) ||  ( $httpCodeFeature != "200" ) ]];
+then
+  echo "INFO - [ $(date +%Y-%m-%d:%H:%M:%S) ] - Exiting since configuration files not found!" >> ${logpath}/artifactorySync.log
+  exit 1;
+fi
+
+echo "INFO - [ $(date +%Y-%m-%d:%H:%M:%S) ] - Downloading the config file from Artifactory" >> ${logpath}/artifactorySync.log
+
+curl -s  $configFilePath/$configFileName  -o $temppath/$configFileName
+curl -s  $configFilePath/$featureFileName  -o $temppath/$featureFileName
+
+echo "INFO - [ $(date +%Y-%m-%d:%H:%M:%S) ] - Checking to see the config files already present in the box" >> ${logpath}/artifactorySync.log
+[ -f ${localpath}/${configFileName} ] && [ -f ${localpath}/${featureFileName} ] && {
+  echo "INFO - [ $(date +%Y-%m-%d:%H:%M:%S) ] - Config files already present so reading the checksum for comparision" >> ${logpath}/artifactorySync.log
+  featureOldChecksum=$(sha1sum ${localpath}/${featureFileName} | awk '{print $1}')
+  configOldChecksum=$(sha1sum ${localpath}/${configFileName} | awk '{print $1}')
+  flag=0
+} || {
+  echo "INFO - [ $(date +%Y-%m-%d:%H:%M:%S) ] - No config files present under ${localpath}. So setting the flag to 1 to download the configs from S3" >> ${logpath}/artifactorySync.log
+  flag=1
+}
+
+[ -f ${temppath}/${configFileName} ] && [ -f ${temppath}/${featureFileName} ] && {
+  echo "INFO - [ $(date +%Y-%m-%d:%H:%M:%S) ] - Reading the checksum of the files downloaded from the S3" >> ${logpath}/artifactorySync.log
+  featureNewChecksum=$(sha1sum ${temppath}/${featureFileName} | awk '{print $1}')
+  configNewChecksum=$(sha1sum ${temppath}/${configFileName} | awk '{print $1}')
+} || {
+  echo "ERROR - [ $(date +%Y-%m-%d:%H:%M:%S) ] - No files downloaded, something went wrong ..." >> ${logpath}/artifactorySync.log
+  flag=2
+}
+
+if [ $flag == 0 ]; then
+  echo "INFO - [ $(date +%Y-%m-%d:%H:%M:%S) ] - featureOldChecksum = $featureOldChecksum " >> ${logpath}/artifactorySync.log
+  echo "INFO - [ $(date +%Y-%m-%d:%H:%M:%S) ] - featureNewChecksum = $featureNewChecksum " >> ${logpath}/artifactorySync.log
+  echo "INFO - [ $(date +%Y-%m-%d:%H:%M:%S) ] - configOldChecksum = $configOldChecksum " >> ${logpath}/artifactorySync.log
+  echo "INFO - [ $(date +%Y-%m-%d:%H:%M:%S) ] - configNewChecksum = $configNewChecksum " >> ${logpath}/artifactorySync.log
+  if [[ "$featureOldChecksum" == "$featureNewChecksum" && "$configOldChecksum" == "$configNewChecksum" ]]; then
+    echo "INFO - [ $(date +%Y-%m-%d:%H:%M:%S) ] - Checksum matches. Doing nothing" >> ${logpath}/artifactorySync.log
+  else
+    echo "INFO - [ $(date +%Y-%m-%d:%H:%M:%S) ] - Checksum differ. Setting the flag to 1" >> ${logpath}/artifactorySync.log
+    flag=1
+  fi
+fi
+
+if [ $flag == 1 ]; then
+  echo "INFO - [ $(date +%Y-%m-%d:%H:%M:%S) ] - Downloading the config" >> ${logpath}/artifactorySync.log
+  cp $temppath/* $localpath
+  echo "INFO - [ $(date +%Y-%m-%d:%H:%M:%S) ] - Clearing Memcached Started.." >> ${logpath}/artifactorySync.log
+  echo "flush_all" | nc localhost 11211
+  echo "INFO - [ $(date +%Y-%m-%d:%H:%M:%S) ] - Clearing Memcached Complete" >> ${logpath}/artifactorySync.log
+fi

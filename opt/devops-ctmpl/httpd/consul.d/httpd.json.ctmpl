@@ -1,0 +1,17 @@
+{
+  "service": {
+    "name": "adaptive-httpd",
+    "id": "{{ env "INSTANCE_ID"}}",
+    "address": "{{ env "LOCAL_IPV4" }}",
+    "port": 80,
+    "tags": [ "adaptive" ],
+    "checks": [
+      {
+        "name": "httpd Service Status",
+        "notes": "Check to see if service is up",
+        "interval": "10s",
+        "script": "curl http://localhost/ping.html"
+      }
+    ]
+  }
+}

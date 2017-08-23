@@ -1,0 +1,17 @@
+{
+  "service": {
+    "name": "adaptive-memcache",
+    "id": "{{ env "INSTANCE_ID"}}",
+    "address": "{{ env "LOCAL_IPV4" }}",
+    "port": 11211,
+    "tags": [ "adaptive" ],
+    "checks": [
+      {
+        "name": "Memcached Service Status",
+        "notes": "Check to see if service is up",
+        "interval": "10s",
+        "script": "systemctl status memcached"
+      }
+    ]
+  }
+}

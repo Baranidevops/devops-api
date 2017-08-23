@@ -1,0 +1,21 @@
+{
+  "checks": {
+    "adaptive_check_load_alert":{
+  "comment": "Checks to alert Load ave utilization for adaptive application ",
+  "command": "/etc/sensu/plugins/check-load.rb -w 3,1.5,1.3 -c 4,1.75,1.5",
+  "notification": "Checks to alert load utilization for adaptive application",
+  "subscribers": [
+    "Adaptive_API",
+    "Adaptive_Api-Perf"
+  ],
+  "standalone": true,
+  "handlers": [
+    "default","pagerduty"
+  ],
+  "interval": 300,
+  "additional": {
+    "occurrences": 2
+  }
+}
+}
+}

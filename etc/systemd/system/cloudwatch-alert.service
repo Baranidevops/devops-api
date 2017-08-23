@@ -1,0 +1,16 @@
+[Unit]
+Description=For creating cloudwatch alerts on ASG level
+After=instancetag.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/environment
+ExecStart=/usr/bin/cloudwatch-alert.sh
+Restart=no
+User=root
+Group=root
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target

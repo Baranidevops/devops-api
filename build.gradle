@@ -1,0 +1,185 @@
+import de.undercouch.gradle.tasks.download.Download
+
+buildscript {
+  repositories {
+    maven { url "${artifactoryUrl}/cpe-plugins-release-local/" }
+  }
+  dependencies {
+    classpath "com.devops.cpe:cpe-rpm-plugins:0.0.3"
+  }
+}
+
+plugins {
+  id 'nebula.ospackage' version '3.4.0'
+  id 'nebula.nebula-release' version '4.0.1'
+  id 'com.jfrog.artifactory' version '4.1.1'
+  id "de.undercouch.download" version "3.0.0"
+}
+
+apply plugin: 'cpe.rpm.publish'
+
+repositories {
+    maven { url "${artifactoryUrl}/cpe-plugins-release-local/" }
+}
+
+task downloadConfigSource(type: Download) {
+    src "${sourceArtifactUrl}/${sourceArtifactRepository}/${sourceArtifactPath}/${sourceConfigArtifactName}"
+    dest "${buildDir}/source/${finalConfigSourceArtifactName}"
+}
+task downloadSource(type: Download) {
+    src "${sourceArtifactUrl}/${sourceArtifactRepository}/${sourceArtifactPath}/${sourceWarArtifactName}"
+    dest "${buildDir}/source/${finalSourceWarArtifactName}"
+}
+task downloadApr(type: Download) {
+    src "${sourceArtifactUrl}/${sourceArtifactRepository}/${sourceArtifactPath}/${sourceAprName}"
+    dest "${buildDir}/source/apr/${finalsourceAprName}"
+}
+
+task configunzip(type: Copy) {
+  def zipFile = file("${buildDir}/source/${finalConfigSourceArtifactName}")
+  def outputDir = file("${buildDir}/source/tmp")
+
+  from zipTree(zipFile)
+  into outputDir
+}
+
+task unzip(type: Copy) {
+  def zipFile = file("${buildDir}/source/${finalSourceWarArtifactName}")
+  def outputDir = file("${buildDir}/source/tmp")
+
+  from zipTree(zipFile)
+  into outputDir
+}
+project.tasks.unzip.dependsOn(configunzip)
+project.tasks.configunzip.dependsOn(downloadSource)
+project.tasks.buildRpm.dependsOn(unzip)
+project.tasks.downloadSource.dependsOn(downloadConfigSource)
+project.tasks.downloadConfigSource.dependsOn(downloadApr)
+
+buildRpm {
+  packageName "devopsadaptiveapi"
+  version "${project.versionConfig.rpmVersion}"
+  release "${project.versionConfig.rpmRelease}"
+  arch "${project.versionConfig.rpmArch}"
+  os "${project.versionConfig.rpmOS}"
+
+  requires('devops-tomcat')
+  requires('devops-memcached')
+  requires('nmap-ncat')
+  requires('bc')
+  requires('apr-devel')
+  requires('openssl-devel')
+  requires('unzip')
+  requires('devops-instance-tags')
+
+  preInstall file('pkg_scripts/preInstall.sh')
+  postInstall file('pkg_scripts/postInstall.sh')
+
+  from("${buildDir}/source/tmp") {
+    addParentDirs = false
+    into "/usr/share/tomcat/webapps"
+    fileMode 0644
+    user 'root'
+    permissionGroup 'root'
+  }
+
+  from("${buildDir}/source/apr") {
+    addParentDirs = false
+    into "/usr/share/"
+    fileMode 0644
+    user 'root'
+    permissionGroup 'root'
+  }
+
+  from("usr/share/tomcat/") {
+      into "/usr/tmp-cpl/share/tomcat"
+      fileMode 0644
+      user 'tomcat'
+      permissionGroup 'tomcat'
+}
+from("usr/bin/tagenvset.sh") {
+  into "/usr/bin"
+  fileMode 0755
+  user 'root'
+  permissionGroup 'root'
+}
+
+from("usr/bin/cloudwatch-alert.sh") {
+  into "/usr/bin"
+  fileMode 0755
+  user 'root'
+  permissionGroup 'root'
+}
+
+from("etc/httpd") {
+  addParentDirs = false
+  into "/etc/tmp-cpl/httpd"
+  fileMode 0644
+  user 'root'
+  permissionGroup 'root'
+}
+
+
+from("etc/consul-template.d") {
+  into "/etc/consul-template.d"
+  fileMode 0644
+  user 'root'
+  permissionGroup 'root'
+}
+
+from("etc/consul.d") {
+  into "/etc/consul.d"
+  fileMode 0644
+  user 'root'
+  permissionGroup 'root'
+}
+
+from("etc/logstash") {
+  addParentDirs = false
+  into "/etc/logstash"
+  fileMode 0644
+  user 'logstash'
+  permissionGroup 'logstash'
+}
+
+from("etc/sensu") {
+  addParentDirs = false
+  into "/etc/sensu"
+  fileMode 0755
+  user 'root'
+  permissionGroup 'sensu'
+}
+
+from("opt/devops-ctmpl") {
+  into "/opt/devops-ctmpl"
+  fileMode 0644
+  user 'root'
+  permissionGroup 'root'
+}
+
+
+from("etc/systemd/system") {
+  addParentDirs = false
+  into "/etc/tmp-cpl/systemd/system"
+  fileMode 0755
+  user 'root'
+  permissionGroup 'root'
+}
+
+from("etc/systemd/system/configSync.service") {
+  addParentDirs = false
+  into "/etc/systemd/system"
+  fileMode 0755
+  user 'root'
+  permissionGroup 'root'
+}
+
+from("var/www/html") {
+  addParentDirs = false
+  into "/var/www/html/"
+  fileMode 0755
+  user 'root'
+  permissionGroup 'root'
+}
+
+}
